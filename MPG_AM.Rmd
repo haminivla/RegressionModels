@@ -1,0 +1,78 @@
+---
+title: "MPG between AT and MT"
+author: "AM"
+date: "Tuesday, March 17, 2015"
+output: pdf_document
+geometry: margin=1.5cm
+---
+## 1. Executive Summary  
+  
+This report explores if **automatic** or **manual** transmission (AT/MT) cars gives a better **miles per gallon (MPG)** rating. To derive the answer, the dataset 'mtcars' which is a collection of 32 cars is analysed taking into consideration variables such as cylinders, weight, displacement, etc. This report also quantify the MPG difference between AT and MT.  
+  
+The analysis is first performed by applying a linear model on the data between variables mpg and am to have a rough idea of the answer. To explore the answer further as a whole, we also picked the other variables which have the most influential values and added them into the linear model.
+  
+In conclusion, manual transmission cars does have a better mpg compared to automatic transmission cars.  
+  
+## 2. Exploratory Data Analysis  
+  
+The data set contains 32 observations of different cars with 11 variables. All of the variables are quantifiable in numeric values except for 'vs' and 'am'.  
+- '**vs**' which stands for "V engine shape" or "Straight engine shape" is represented by 0 and 1 respectively.  
+- '**am**' which stands for "Auto transmission" or "Manual transmission" is represented by 0 and 1 respectively.  
+``` {r echo=FALSE}
+data(mtcars)
+```
+Since the question is interested in **am**'s relation with mpg, let's understand this variable further. Throughout this analysis, 'am' will be presented as a factor.  
+``` {r echo=FALSE}
+## Convert 'am' to factor
+mtcars$am <- sapply(mtcars$am, factor)
+lm(mpg ~ am - 1, mtcars)$coef
+```
+Looking at the above **coefficients** of 'am' as a factor to mpg, removing the Intercept will give us the mean of mpg grouped by am0 (Auto) and am1 (Manual). A biased assumption of manual giving better mpg over auto is formed.  
+
+## 3. Relationship between the variables and MPG  
+  
+Other variables should also be considered to support our assumption of manual over auto. The strategy is to use analysis of variance (aov) model to determine the variables that have strong relationship with mpg so that an appropriate model can be built. The pairs plot in **Appendix 1** provides an insight of the data.  
+``` {r echo=FALSE}
+summary(aov(lm(mpg~.,mtcars)))
+```
+  
+The variables with lowest significant codes will have the highest impact on mpg. From the results above, we pick the top 3 which are cyl, wt and disp to fit in our nested model testing.  
+  
+## 4. Selecting the best model  
+
+Nested model testing is performed by first running a linear model of mpg (as outcome) with only am and cyl (as predictor). Then the next linear model is fitted with predictor 'wt' added and repeated by adding 'disp'. The 3 linear model passed into the anova function to determine which is the best by looking at the p values.
+``` {r echo=FALSE}
+fit1 <- lm(mpg ~ am + cyl, mtcars)
+fit2 <- lm(mpg ~ am + cyl + wt, mtcars)
+fit3 <- lm(mpg ~ am + cyl + wt + disp, mtcars)
+anova(fit1, fit2, fit3)
+```
+From the results, **model 2** will be choosen the best fitted model.  
+
+## 5. Quantified MPG difference between Auto vs Manual transmissions  
+
+To obtain the mpg difference, a multivariable regression analysis is performed using 'am' as a factor with two levels, *auto (am0)* and *manual (am1)*. By default, the first sorted variable/factor will be the Intercept, which is *manual (am1)* in this case. Our selected model 2 is used for this analysis.  
+``` {r echo=FALSE}
+summary(fit2)
+```
+  
+Therefore, the quantified answer is manual transmission cars have better MPG than auto transmission cars by an estimated **0.1765** MPG. Looking at the multiple R squared value, 83% of variance is explained by this model which means this is a reliable model. The residual plot in **Appendix 2** justifies that the distribution of residuals are normal.  
+
+***  
+*References*  
+*[A Biometrics Invited Paper. The Analysis and Selection of Variables in Linear
+Regression](http://citeseerx.ist.psu.edu/viewdoc/download;jsessionid=B982A74AD1129F64D03BB87CA0430804?doi=10.1.1.472.4742&rep=rep1&type=pdf) - R. R. Hocking, Biometrics, Vol. 32, No. 1. (Mar., 1976), pp. 1-49.*  
+
+\pagebreak
+  
+## Appendix 1 - Pair plot  
+  
+``` {r echo=FALSE}
+pairs(mtcars)
+```
+
+## Appendix 2 - Residual plots  
+``` {r echo=FALSE}
+par(mfrow=c(2,2))
+plot(fit)
+```
